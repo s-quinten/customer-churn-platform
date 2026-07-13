@@ -1,0 +1,10 @@
+# PySpark 4.x required: Python 3.13 support starts at Spark 4.0
+pyspark>=4.0.0
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+jupyter
+python-dotenv
+psycopg2-binary
