@@ -82,7 +82,10 @@ PRODUCTS = StructType([
 
 EVENTS = StructType([
     StructField("id", LongType(), nullable=False),
-    StructField("user_id", LongType()),          # null for anonymous sessions
+    # user_id arrives as float text ("15495.0"): the CSV was exported
+    # through pandas, which turns nullable int columns into floats.
+    # Read as double, cast back to long in the loader.
+    StructField("user_id", DoubleType()),        # null for anonymous sessions
     StructField("sequence_number", IntegerType()),
     StructField("session_id", StringType()),
     StructField("created_at", TimestampType()),

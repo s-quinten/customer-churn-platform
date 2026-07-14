@@ -19,7 +19,7 @@ US_COUNTRY_VALUE = "United States"  # exact string used in users.country
 
 
 def load_table(spark: SparkSession, name: str) -> DataFrame:
-    return spark.read.csv(
+    df = spark.read.csv(
         f"{RAW_DIR}/{name}.csv",
         header=True,
         schema=THELOOK_SCHEMAS[name],
@@ -28,6 +28,10 @@ def load_table(spark: SparkSession, name: str) -> DataFrame:
         # data problems until much later).
         mode="FAILFAST",
     )
+    if name == "events":
+        # undo the pandas float export artifact, see schemas.py
+        df = df.withColumn("user_id", df["user_id"].cast("long"))
+    return df
 
 
 def load_us_users(spark: SparkSession) -> DataFrame:

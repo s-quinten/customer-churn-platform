@@ -1,12 +1,8 @@
 # Customer Churn Platform
 
-An end-to-end customer churn prediction platform: a PySpark data pipeline feeding a machine learning classifier and an NLP layer for unstructured customer feedback, surfaced through an interactive dashboard. Containerized with Docker Compose and deployable both locally and on Google Cloud Platform.
+End-to-end churn prediction on e-commerce data: PySpark pipeline for the data processing, an ML classifier to predict churn risk, an NLP layer on top of real consumer complaint texts, and a dashboard to show the results. Everything runs in Docker, locally and on Google Cloud.
 
-**Status:** actively in development (started July 2026). This README tracks real progress, see the roadmap below for what's done vs. planned.
-
-## Why this project
-
-Churn prediction sits at the intersection of the things I want to work with professionally: large-scale data processing, applied ML, and infrastructure that runs the same way locally as it does in the cloud. This project is built to demonstrate that end-to-end, not just the modeling part.
+Started July 2026, actively being built. The roadmap below shows where the project stands.
 
 ## Architecture
 
@@ -31,42 +27,67 @@ Churn prediction sits at the intersection of the things I want to work with prof
                       └──────────────────┘
 ```
 
-A full architecture diagram (with the Docker Compose / Traefik / GCP deployment topology) lives in [`docs/architecture.md`](docs/architecture.md) and is being filled in as the infrastructure lands.
+The Docker and deployment topology (Traefik, Postgres, GCP) will be documented in `docs/architecture.md` once that part is built.
 
-## Tech stack
+## Stack
 
 | Layer | Tools |
 |---|---|
-| Data processing | PySpark |
-| Storage | PostgreSQL |
-| ML | scikit-learn (baseline), evaluated with proper train/validation/test splits |
-| NLP | spaCy / scikit-learn text pipelines (TBD as this layer is built) |
+| Data processing | PySpark 4 (in Docker, jupyter/pyspark-notebook image) |
+| Storage | PostgreSQL, parquet for the intermediate datasets |
+| ML | scikit-learn |
+| NLP | spaCy / scikit-learn text pipelines |
 | Dashboard | Streamlit |
-| Infrastructure | Docker Compose, Traefik (reverse proxy), deployed on GCP |
+| Infra | Docker Compose, Traefik, GCP |
 | Language | Python 3.13 |
 
-## Data sources
+## Data
 
-- **[TheLook eCommerce](https://www.kaggle.com/datasets/mustafakeser4/looker-ecommerce-bigquery-dataset)**: synthetic but realistic US e-commerce data (users, orders, order items, products, events) spanning all US states, used as the structured backbone for churn labeling and feature engineering.
-- **[CFPB Consumer Complaint Database](https://www.consumerfinance.gov/data-research/consumer-complaints/)**: real US consumer complaints against financial services companies, including free-text complaint narratives, used as the source for the NLP layer.
+Two datasets, both US based so state level comparison is possible:
 
-Full dataset documentation, schema notes, and download instructions are in [`data/README.md`](data/README.md).
+- [TheLook eCommerce](https://www.kaggle.com/datasets/mustafakeser4/looker-ecommerce-bigquery-dataset): synthetic e-commerce data (100k users, 2.4M web events, orders from 2019 to 2024). Used for the churn label and the customer features. The project only uses the 22.5k US customers.
+- [CFPB Consumer Complaint Database](https://www.consumerfinance.gov/data-research/consumer-complaints/): 2.36M real consumer complaints against financial companies, all with free text narratives. This is the input for the NLP part.
+
+Download instructions and schema notes: [`data/README.md`](data/README.md).
+
+## How the churn label works
+
+TheLook has no churn column, so the label is derived from order behavior. A cutoff date is placed 180 days before the last order in the dataset. Customers with at least one order before the cutoff are in scope, and whoever doesn't order again after the cutoff counts as churned. All features are computed from data before the cutoff only, so the model can't peek at the answer (no label leakage).
+
+The 180 day window wasn't a random pick: the median time between two orders from the same customer is 155 days, so someone who stays quiet for 6 months is past their normal rhythm. The full analysis is in [`notebooks/02_churn_window.ipynb`](notebooks/02_churn_window.ipynb). About 85% of customers churn under this definition, which sounds high but is normal for e-commerce, most shoppers buy once and never come back. The class imbalance gets handled in the ML step.
 
 ## Roadmap
 
-- [x] Repository structure
-- [ ] Dataset ingestion and exploratory analysis
-- [ ] PySpark ETL pipeline (cleaning, joins, feature engineering)
-- [ ] Churn label definition
-- [ ] Baseline ML classifier + evaluation
-- [ ] NLP pipeline on complaint narratives
+- [x] Repo structure
+- [x] Ingestion with explicit Spark schemas (TheLook + CFPB)
+- [x] EDA notebooks
+- [x] Churn label with temporal cutoff
+- [x] Feature engineering (recency, frequency, spend, browsing behavior) into one training table
+- [ ] ML classifier + evaluation
+- [ ] NLP pipeline on the complaint narratives
 - [ ] Streamlit dashboard
-- [ ] Docker Compose (multi-container, Traefik reverse proxy, Postgres)
+- [ ] Docker Compose stack with Traefik and Postgres
 - [ ] GCP deployment
 
-## Getting started
+## Running it
 
-Setup instructions will be added once the pipeline has a runnable first version. In the meantime, see [`data/README.md`](data/README.md) for how to obtain the raw datasets.
+1. Download the raw data into `data/raw/`, see [`data/README.md`](data/README.md).
+2. Start the Spark container (this is also the Jupyter server for the notebooks):
+
+```powershell
+docker network create qs-data
+docker run -d --name qs-spark --network qs-data -p 8888:8888 `
+  -v ${PWD}:/home/jovyan/work quay.io/jupyter/pyspark-notebook:latest
+```
+
+3. Build the training dataset:
+
+```powershell
+docker exec -e PYTHONPATH=/usr/local/spark/python:/usr/local/spark/python/lib/py4j-0.10.9.9-src.zip:/home/jovyan/work `
+  qs-spark bash -c "cd /home/jovyan/work && python -m src.processing.build_dataset"
+```
+
+Output lands in `data/processed/churn_dataset` as parquet. For the notebooks: `docker logs qs-spark` gives the Jupyter URL with the token, or connect PyCharm to it as an external Jupyter server.
 
 ## License
 
