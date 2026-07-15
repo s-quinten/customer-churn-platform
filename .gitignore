@@ -225,3 +225,6 @@ data/processed/*
 
 # PyCharm project config
 .idea/
+
+# trained models are build artifacts, retrain with src/ml + src/nlp
+models/

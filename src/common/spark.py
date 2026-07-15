@@ -13,10 +13,13 @@ from pyspark.sql import SparkSession
 
 def get_spark(app_name: str) -> SparkSession:
     master = os.environ.get("SPARK_MASTER", "local[*]")
+    driver_memory = os.environ.get("SPARK_DRIVER_MEMORY", "4g")
     return (
         SparkSession.builder
         .appName(app_name)
         .master(master)
+        # local mode default is 1g, not enough for the complaints file
+        .config("spark.driver.memory", driver_memory)
         # Spark's RPC layer builds a spark:// URL from the machine's
         # hostname and rejects underscores in it (invalid URL chars).
         # Binding to localhost sidesteps hostname quirks entirely.

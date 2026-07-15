@@ -48,7 +48,12 @@ def load_complaints(spark: SparkSession) -> DataFrame:
     }
     for old, new in renames.items():
         df = df.withColumnRenamed(old, new)
-    return df.withColumn("date_received", F.to_date("date_received", "M/d/yy"))
+    # dates come as ISO strings like 2023-07-11T15:12:42.000Z;
+    # try_to_timestamp gives null on the occasional malformed value
+    # instead of failing the whole job under ANSI mode
+    return df.withColumn(
+        "date_received", F.to_date(F.try_to_timestamp("date_received"))
+    )
 
 
 def main() -> None:

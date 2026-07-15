@@ -134,10 +134,10 @@ THELOOK_SCHEMAS = {
 # ---------------------------------------------------------------------------
 # CFPB Consumer Complaint Database (NLP layer)
 # ---------------------------------------------------------------------------
-# "Date received" / "Date sent to company" are dates without time; kept as
-# StringType at ingestion and cast with to_date() in the cleaning step,
-# because CFPB formats them as MM/DD/YY-style strings that Spark's CSV
-# timestamp parser trips over.
+# "Date received" / "Date sent to company" are kept as StringType at
+# ingestion and parsed in the loader, the export mixes ISO timestamp
+# strings that are easier to handle explicitly than through the CSV
+# parser's format option.
 
 COMPLAINTS = StructType([
     StructField("Date received", StringType()),
