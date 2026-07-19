@@ -63,11 +63,25 @@ The 180 day window wasn't a random pick: the median time between two orders from
 - [x] EDA notebooks
 - [x] Churn label with temporal cutoff
 - [x] Feature engineering (recency, frequency, spend, browsing behavior) into one training table
-- [ ] ML classifier + evaluation
-- [ ] NLP pipeline on the complaint narratives
+- [x] ML classifier + evaluation
+- [x] NLP pipeline on the complaint narratives
+- [x] Postgres serving schema (star schemas for churn scores and complaint stats)
 - [ ] Streamlit dashboard
-- [ ] Docker Compose stack with Traefik and Postgres
-- [ ] GCP deployment
+- [ ] Metabase as second user-facing app on the same database
+- [ ] Docker Compose stack with Traefik reverse proxy
+- [ ] GCP deployment with Cloudflare DNS and a ZeroSSL certificate
+
+## Project log
+
+Short notes on what got built when, and what I learned along the way.
+
+**July 11-13.** Repo setup, dataset choice and ingestion. Picked TheLook (structured, all US states) plus CFPB complaints (real free text) over the usual 7k row telco churn csv, mainly because deriving my own churn label from raw behavior is a better exercise than consuming a premade label column. Explicit Spark schemas caught a fun data bug on day one: user ids stored as float text because the dataset was exported through pandas. Also fought three Windows specific Spark issues, which pushed me to run Spark in Docker from day two onward.
+
+**July 14.** Reworked the churn label after realizing my first version would leak: recency features computed at the same date as the label literally contain the answer. New setup uses a temporal cutoff, features from before it, label from the 180 days after it. Picked 180 days from the actual reorder gap distribution (median 155 days). Built the feature table with PySpark and wrote it as parquet.
+
+**July 15-16.** Trained the churn classifier (random forest won, test ROC-AUC 0.62, honest number for synthetic data and I can explain why suspiciously high scores would have worried me more). Converted the 3GB complaints csv to parquet after learning the hard way that a multiline csv reads as a single Spark task. Built a complaint topic classifier with TF-IDF and logistic regression, macro F1 0.65 over 12 products.
+
+**July 18-19.** Started the serving layer, hands on in psql and PyCharm. Postgres 17 in a container with a named volume, star schema design for two business processes: churn scoring (one row per customer per scoring date) and complaint stats (one row per state, product and month). Two fact tables sharing dim_state and dim_date turned out to have a name, a fact constellation, which I had not seen in class where we built a single star. Composite primary keys encode each table's grain, foreign keys enforce the star shape. The schema is saved as a Postgres init script so a fresh container builds it automatically. Also ran all notebooks so the outputs render on the repo, and tagged the churn scores with their train/validation/test split: evaluation plots now use held out customers only, since a random forest scores its own training rows near perfectly and that view flatters the model.
 
 ## Running it
 

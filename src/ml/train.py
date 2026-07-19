@@ -150,9 +150,14 @@ def main() -> None:
     with open(MODEL_DIR / "metrics.json", "w") as f:
         json.dump({"validation": results, "test": test_result}, f, indent=2)
 
-    # score every customer for the dashboard
+    # score every customer for the dashboard, tagging which split each
+    # row was in so evaluation plots can use held out rows only
+    # (training set predictions look far better than they really are)
     scores = df[["user_id", "state", TARGET]].copy()
     scores["churn_probability"] = best.predict_proba(df[feature_cols])[:, 1]
+    scores["split"] = "train"
+    scores.loc[val.index, "split"] = "validation"
+    scores.loc[test.index, "split"] = "test"
     scores.to_parquet(SCORES_PATH, index=False)
     print(f"\nwrote {len(scores):,} customer scores to {SCORES_PATH}")
 
