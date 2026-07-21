@@ -4,6 +4,8 @@ End-to-end churn prediction on e-commerce data: PySpark pipeline for the data pr
 
 Started July 2026, actively being built. The roadmap below shows where the project stands.
 
+![Churn platform dashboard](docs/dashboard.jpg)
+
 ## Architecture
 
 ```
@@ -66,7 +68,7 @@ The 180 day window wasn't a random pick: the median time between two orders from
 - [x] ML classifier + evaluation
 - [x] NLP pipeline on the complaint narratives
 - [x] Postgres serving schema (star schemas for churn scores and complaint stats)
-- [ ] Streamlit dashboard
+- [x] Streamlit dashboard (churn risk and complaints, US map per state)
 - [ ] Metabase as second user-facing app on the same database
 - [ ] Docker Compose stack with Traefik reverse proxy
 - [ ] GCP deployment with Cloudflare DNS and a ZeroSSL certificate
