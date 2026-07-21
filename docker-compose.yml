@@ -15,6 +15,23 @@ services:
       - qs-data
     restart: unless-stopped
 
+  qs-dashboard:
+    build: ./dashboard
+    container_name: qs-dashboard
+    environment:
+      DB_HOST: qs-postgres
+      DB_PORT: 5432
+      DB_USER: churn
+      DB_PASSWORD: churnpass
+      DB_NAME: churn
+    ports:
+      - "8501:8501"
+    networks:
+      - qs-data
+    depends_on:
+      - qs-postgres
+    restart: unless-stopped
+
 volumes:
   qs-pgdata:
     name: qs-pgdata

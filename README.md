@@ -47,8 +47,8 @@ The Docker and deployment topology (Traefik, Postgres, GCP) will be documented i
 
 Two datasets, both US based so state level comparison is possible:
 
-- [TheLook eCommerce](https://www.kaggle.com/datasets/mustafakeser4/looker-ecommerce-bigquery-dataset): synthetic e-commerce data (100k users, 2.4M web events, orders from 2019 to 2024). Used for the churn label and the customer features. The project only uses the 22.5k US customers.
-- [CFPB Consumer Complaint Database](https://www.consumerfinance.gov/data-research/consumer-complaints/): 2.36M real consumer complaints against financial companies, all with free text narratives. This is the input for the NLP part.
+- [TheLook eCommerce](https://www.kaggle.com/datasets/mustafakeser4/looker-ecommerce-bigquery-dataset): synthetic e-commerce data (100k users, 2.4M web events, orders from 2019 to 2024). Used for the churn label and the customer features. The project scopes to the 22.5k US users, of which about 11.5k had orders before the cutoff and are actually scored.
+- [CFPB Consumer Complaint Database](https://www.consumerfinance.gov/data-research/consumer-complaints/): 2.36M real consumer complaints with narratives. This is the input for the NLP part. After cleaning (US states, valid product, dedupe) about 2.28M reach the served layer.
 
 Download instructions and schema notes: [`data/README.md`](data/README.md).
 
