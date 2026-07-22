@@ -32,9 +32,29 @@ services:
       - qs-postgres
     restart: unless-stopped
 
+  qs-metabase:
+    image: metabase/metabase:latest
+    container_name: qs-metabase
+    environment:
+      # Metabase stores its own config (users, saved questions, database
+      # connections) in an embedded H2 file, kept on a volume so it
+      # survives container recreation.
+      MB_DB_FILE: /metabase-data/metabase.db
+    volumes:
+      - qs-metabase-data:/metabase-data
+    ports:
+      - "3000:3000"
+    networks:
+      - qs-data
+    depends_on:
+      - qs-postgres
+    restart: unless-stopped
+
 volumes:
   qs-pgdata:
     name: qs-pgdata
+  qs-metabase-data:
+    name: qs-metabase-data
 
 networks:
   qs-data:

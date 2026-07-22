@@ -69,7 +69,7 @@ The 180 day window wasn't a random pick: the median time between two orders from
 - [x] NLP pipeline on the complaint narratives
 - [x] Postgres serving schema (star schemas for churn scores and complaint stats)
 - [x] Streamlit dashboard (churn risk and complaints, US map per state)
-- [ ] Metabase as second user-facing app on the same database
+- [x] Metabase as second user-facing app on the same database
 - [ ] Docker Compose stack with Traefik reverse proxy
 - [ ] GCP deployment with Cloudflare DNS and a ZeroSSL certificate
 
